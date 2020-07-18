@@ -5,35 +5,7 @@ import logging
 import torch
 import numpy as np
 
-from transformers import (
-    BertConfig,
-    DistilBertConfig,
-    ElectraConfig,
-    BertTokenizer,
-    ElectraTokenizer,
-    BertForSequenceClassification,
-    DistilBertForSequenceClassification,
-    ElectraForSequenceClassification
-)
-from tokenization_kobert import KoBertTokenizer
-
-MODEL_CLASSES = {
-    'kobert': (BertConfig, BertForSequenceClassification, KoBertTokenizer),
-    'distilkobert': (DistilBertConfig, DistilBertForSequenceClassification, KoBertTokenizer),
-    'bert': (BertConfig, BertForSequenceClassification, BertTokenizer),
-    'kobert-lm': (BertConfig, BertForSequenceClassification, KoBertTokenizer),
-    'koelectra-base': (ElectraConfig, ElectraForSequenceClassification, ElectraTokenizer),
-    'koelectra-small': (ElectraConfig, ElectraForSequenceClassification, ElectraTokenizer),
-}
-
-MODEL_PATH_MAP = {
-    'kobert': 'monologg/kobert',
-    'distilkobert': 'monologg/distilkobert',
-    'bert': 'bert-base-multilingual-cased',
-    'kobert-lm': 'monologg/kobert-lm',
-    'koelectra-base': 'monologg/koelectra-base-discriminator',
-    'koelectra-small': 'monologg/koelectra-small-discriminator',
-}
+from transformers import AutoTokenizer, AutoModel, AutoConfig
 
 
 def get_label(args):
@@ -41,7 +13,7 @@ def get_label(args):
 
 
 def load_tokenizer(args):
-    return MODEL_CLASSES[args.model_type][2].from_pretrained(args.model_name_or_path)
+    return AutoTokenizer.from_pretrained(args.model_name_or_path)
 
 
 def init_logger():
