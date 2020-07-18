@@ -6,8 +6,9 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from transformers import AdamW, get_linear_schedule_with_warmup
+from transformers import AutoConfig, BertForSequenceClassification
 
-from utils import compute_metrics, get_label, MODEL_CLASSES
+from utils import compute_metrics, get_label
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,8 @@ class Trainer(object):
         self.label_lst = get_label(args)
         self.num_labels = len(self.label_lst)
 
-        self.config_class, self.model_class, _ = MODEL_CLASSES[args.model_type]
+        self.config_class = AutoConfig
+        self.model_class = BertForSequenceClassification
 
         self.config = self.config_class.from_pretrained(args.model_name_or_path,
                                                         num_labels=self.num_labels, 
@@ -79,8 +81,7 @@ class Trainer(object):
                 inputs = {'input_ids': batch[0],
                           'attention_mask': batch[1],
                           'labels': batch[3]}
-                if self.args.model_type != 'distilkobert':
-                    inputs['token_type_ids'] = batch[2]
+                inputs['token_type_ids'] = batch[2]
                 outputs = self.model(**inputs)
                 loss = outputs[0]
 
@@ -142,8 +143,7 @@ class Trainer(object):
                 inputs = {'input_ids': batch[0],
                           'attention_mask': batch[1],
                           'labels': batch[3]}
-                if self.args.model_type != 'distilkobert':
-                    inputs['token_type_ids'] = batch[2]
+                inputs['token_type_ids'] = batch[2]
                 outputs = self.model(**inputs)
                 tmp_eval_loss, logits = outputs[:2]
 
