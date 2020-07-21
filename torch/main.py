@@ -1,9 +1,8 @@
 import argparse
-import torch
 
-from data_loader import load_and_cache_examples
-from trainer import Trainer
-from utils import init_logger, load_tokenizer, set_seed
+from torch.data_loader import load_and_cache_examples
+from torch.trainer import Trainer
+from torch.utils import init_logger, load_tokenizer, set_seed
 
 
 def main(args):
@@ -40,7 +39,7 @@ if __name__ == '__main__':
     parser.add_argument("--train_batch_size", default=32, type=int, help="Batch size for training.")
     parser.add_argument("--eval_batch_size", default=256, type=int, help="Batch size for evaluation.")
     parser.add_argument("--max_seq_len", default=146, type=int, help="The maximum total input sequence length after tokenization.")
-    parser.add_argument("--learning_rate", default=1e-5, type=float, help="The initial learning rate for Adam.")
+    parser.add_argument("--learning_rate", default=1e-4, type=float, help="The initial learning rate for Adam.")
     parser.add_argument("--num_train_epochs", default=1, type=float, help="Total number of training epochs to perform.")
     parser.add_argument("--weight_decay", default=0.0, type=float, help="Weight decay if we apply some.")
     parser.add_argument('--gradient_accumulation_steps', type=int, default=1, help="Number of updates steps to accumulate before performing a backward/update pass.")

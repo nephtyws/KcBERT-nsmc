@@ -7,7 +7,7 @@ from tqdm import tqdm, trange
 from transformers import AdamW, get_linear_schedule_with_warmup
 from transformers import AutoConfig, BertForSequenceClassification
 
-from utils import compute_metrics, get_label
+from torch.utils import compute_metrics, get_label
 
 
 logger = logging.getLogger(__name__)
@@ -182,7 +182,7 @@ class Trainer:
         results.update(result)
 
         logger.info("***** Eval results *****")
-        with open("./evaluation_result.txt", "a+", encoding="utf-8") as f:
+        with open("./model/evaluation_result.txt", "a+", encoding="utf-8") as f:
             for key in sorted(results.keys()):
                 logger.info(f"{key} = {str(results[key])}")
                 f.write(f"Current global step: {global_step} and results: {key} = {str(results[key])}\n")

@@ -131,7 +131,7 @@ dmypy.json
 ##############################
 .idea/
 .vscode/
-model/
+torch/model/
 
 .DS_Store
 
