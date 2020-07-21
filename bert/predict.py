@@ -18,16 +18,16 @@ def get_device(pred_config):
 
 
 def get_args(pred_config):
-    return torch.load(os.path.join(pred_config.model_dir, 'training_args.bin'))
+    return torch.load(os.path.join(pred_config.model_dir, "training_args.bin"))
 
 
 def load_model(pred_config, args, device):
-    # Check whether model exists
     if not os.path.exists(pred_config.model_dir):
         raise Exception("Model doesn't exists! Train first!")
 
     try:
-        model = AutoModelForSequenceClassification.from_pretrained(args.model_dir)  # Config will be automatically loaded from model_dir
+        # Config will be automatically loaded from model_dir
+        model = AutoModelForSequenceClassification.from_pretrained(args.model_dir)
         model.to(device)
         model.eval()
         logger.info("***** Model Loaded *****")
@@ -88,7 +88,6 @@ def convert_input_file_to_tensor_dataset(pred_config,
             all_attention_mask.append(attention_mask)
             all_token_type_ids.append(token_type_ids)
 
-    # Change to Tensor
     all_input_ids = torch.tensor(all_input_ids, dtype=torch.long)
     all_attention_mask = torch.tensor(all_attention_mask, dtype=torch.long)
     all_token_type_ids = torch.tensor(all_token_type_ids, dtype=torch.long)
@@ -99,23 +98,21 @@ def convert_input_file_to_tensor_dataset(pred_config,
 
 
 def predict(pred_config):
-    # load model and args
     args = get_args(pred_config)
     device = get_device(pred_config)
     model = load_model(pred_config, args, device)
     logger.info(args)
 
-    # Convert input file to TensorDataset
     dataset = convert_input_file_to_tensor_dataset(pred_config, args)
 
-    # Predict
     sampler = SequentialSampler(dataset)
     data_loader = DataLoader(dataset, sampler=sampler, batch_size=pred_config.batch_size)
 
-    preds = None
+    # preds = None
 
     for batch in tqdm(data_loader, desc="Predicting"):
         batch = tuple(t.to(device) for t in batch)
+
         with torch.no_grad():
             inputs = {
                 'input_ids': batch[0],
@@ -130,19 +127,19 @@ def predict(pred_config):
             outputs = model(**inputs)
             logits = outputs[0]
 
-            if preds is None:
-                preds = logits.detach().cpu().numpy()
+            confidence = torch.nn.functional.softmax(logits, dim=1).detach().cpu().numpy()
+            label = np.argmax(confidence, axis=1)
 
-            else:
-                preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
+            print(f"Confidence: {confidence[0]}")
+            print(f"Label: {label[0]}")
 
-    preds = np.argmax(preds, axis=1)
+            # if preds is None:
+                # preds = logits.detach().cpu().numpy()
 
-    # Write to output file
-    with open(pred_config.output_file, "w", encoding="utf-8") as f:
-        for pred in preds:
-            f.write(f"{pred}\n")
+            # else:
+                # preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
 
+    # preds = np.argmax(preds, axis=1)
     logger.info("Prediction Done!")
 
 
@@ -154,7 +151,7 @@ if __name__ == "__main__":
     parser.add_argument("--output_file", default="./data/sample_pred_out.txt", type=str, help="Output file for prediction")
     parser.add_argument("--model_dir", default="./model", type=str, help="Path to save, load model")
 
-    parser.add_argument("--batch_size", default=32, type=int, help="Batch size for prediction")
+    parser.add_argument("--batch_size", default=128, type=int, help="Batch size for prediction")
     parser.add_argument("--no_cuda", action="store_true", default=True, help="Avoid using CUDA when available")
 
     pred_config = parser.parse_args()
