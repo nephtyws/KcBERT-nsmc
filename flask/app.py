@@ -1,4 +1,4 @@
-from flask import Flask, current_app
+from flask import current_app, Flask, request
 import numpy as np
 import os
 import torch
@@ -23,9 +23,10 @@ def hello():
     return current_app.send_static_file("hello.html")
 
 
-@app.route("/predict")
-def predict():
-    def convert_input_to_tensor_dataset(sentence):
+def predict(sentence):
+    # sentence = request.form.get("sentence")
+
+    def convert_input_to_tensor_dataset():
         cls_token = tokenizer.cls_token
         sep_token = tokenizer.sep_token
         pad_token_id = tokenizer.pad_token_id
@@ -72,8 +73,7 @@ def predict():
 
         return dataset
 
-    sentence = "정말 별로인 옷이네요 다시는 사고 싶지 않아요"
-    dataset = convert_input_to_tensor_dataset(sentence)
+    dataset = convert_input_to_tensor_dataset()
     sampler = SequentialSampler(dataset)
     data_loader = DataLoader(dataset, sampler=sampler, batch_size=128)
 
