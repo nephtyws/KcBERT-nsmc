@@ -1,14 +1,14 @@
-import os
-import logging
 import argparse
-from tqdm import tqdm, trange
-
+import logging
 import numpy as np
+import os
 import torch
 from torch.utils.data import TensorDataset, DataLoader, SequentialSampler
+from tqdm import tqdm
 from transformers import AutoModelForSequenceClassification
 
 from utils import init_logger, load_tokenizer
+
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +31,7 @@ def load_model(pred_config, args, device):
         model.to(device)
         model.eval()
         logger.info("***** Model Loaded *****")
+
     except:
         raise Exception("Some model files might be missing...")
 
@@ -58,6 +59,7 @@ def convert_input_file_to_tensor_dataset(pred_config,
         for line in f:
             line = line.strip()
             tokens = tokenizer.tokenize(line)
+
             # Account for [CLS] and [SEP]
             special_tokens_count = 2
             if len(tokens) > args.max_seq_len - special_tokens_count:
@@ -115,16 +117,22 @@ def predict(pred_config):
     for batch in tqdm(data_loader, desc="Predicting"):
         batch = tuple(t.to(device) for t in batch)
         with torch.no_grad():
-            inputs = {"input_ids": batch[0],
-                      "attention_mask": batch[1],
-                      "labels": None}
-            if args.model_type != "distilkobert":
-                inputs["token_type_ids"] = batch[2]
+            inputs = {
+                'input_ids': batch[0],
+                'attention_mask': batch[1],
+                'token_type_ids': batch[2],
+                'labels': None,
+            }
+
+            # if args.model_type != "distilkobert":
+                # inputs["token_type_ids"] = batch[2]
+
             outputs = model(**inputs)
             logits = outputs[0]
 
             if preds is None:
                 preds = logits.detach().cpu().numpy()
+
             else:
                 preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
 
@@ -133,7 +141,7 @@ def predict(pred_config):
     # Write to output file
     with open(pred_config.output_file, "w", encoding="utf-8") as f:
         for pred in preds:
-            f.write("{}\n".format(pred))
+            f.write(f"{pred}\n")
 
     logger.info("Prediction Done!")
 
@@ -142,12 +150,12 @@ if __name__ == "__main__":
     init_logger()
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--input_file", default="sample_pred_in.txt", type=str, help="Input file for prediction")
-    parser.add_argument("--output_file", default="sample_pred_out.txt", type=str, help="Output file for prediction")
+    parser.add_argument("--input_file", default="./data/sample_pred_in.txt", type=str, help="Input file for prediction")
+    parser.add_argument("--output_file", default="./data/sample_pred_out.txt", type=str, help="Output file for prediction")
     parser.add_argument("--model_dir", default="./model", type=str, help="Path to save, load model")
 
     parser.add_argument("--batch_size", default=32, type=int, help="Batch size for prediction")
-    parser.add_argument("--no_cuda", action="store_true", help="Avoid using CUDA when available")
+    parser.add_argument("--no_cuda", action="store_true", default=True, help="Avoid using CUDA when available")
 
     pred_config = parser.parse_args()
     predict(pred_config)

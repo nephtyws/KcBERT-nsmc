@@ -1,9 +1,9 @@
-# coding=utf-8
 # Copyright 2018 Google AI, Google Brain and Carnegie Mellon University Authors and the HuggingFace Inc. team and Jangwon Park
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
+
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
@@ -12,45 +12,52 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Tokenization classes for KoBert model."""
 
 
+import sentencepiece as spm
 import logging
 import os
-import unicodedata
 from shutil import copyfile
-
 from transformers import PreTrainedTokenizer
+import unicodedata
 
 
 logger = logging.getLogger(__name__)
 
-VOCAB_FILES_NAMES = {"vocab_file": "tokenizer_78b3253a26.model",
-                     "vocab_txt": "vocab.txt"}
+VOCAB_FILES_NAMES = {
+    'vocab_file': "tokenizer_78b3253a26.model",
+    'vocab_txt': "vocab.txt",
+}
 
 PRETRAINED_VOCAB_FILES_MAP = {
-    "vocab_file": {
-        "monologg/kobert": "https://s3.amazonaws.com/models.huggingface.co/bert/monologg/kobert/tokenizer_78b3253a26.model",
-        "monologg/kobert-lm": "https://s3.amazonaws.com/models.huggingface.co/bert/monologg/kobert-lm/tokenizer_78b3253a26.model",
-        "monologg/distilkobert": "https://s3.amazonaws.com/models.huggingface.co/bert/monologg/distilkobert/tokenizer_78b3253a26.model"
+    'vocab_file': {
+        'monologg/kobert': "https://s3.amazonaws.com/models.huggingface.co/bert/monologg/kobert/tokenizer_78b3253a26.model",
+        'monologg/kobert-lm': "https://s3.amazonaws.com/models.huggingface.co/bert/monologg/kobert-lm/tokenizer_78b3253a26.model",
+        'monologg/distilkobert': "https://s3.amazonaws.com/models.huggingface.co/bert/monologg/distilkobert/tokenizer_78b3253a26.model",
     },
-    "vocab_txt": {
-        "monologg/kobert": "https://s3.amazonaws.com/models.huggingface.co/bert/monologg/kobert/vocab.txt",
-        "monologg/kobert-lm": "https://s3.amazonaws.com/models.huggingface.co/bert/monologg/kobert-lm/vocab.txt",
-        "monologg/distilkobert": "https://s3.amazonaws.com/models.huggingface.co/bert/monologg/distilkobert/vocab.txt"
+    'vocab_txt': {
+        'monologg/kobert': "https://s3.amazonaws.com/models.huggingface.co/bert/monologg/kobert/vocab.txt",
+        'monologg/kobert-lm': "https://s3.amazonaws.com/models.huggingface.co/bert/monologg/kobert-lm/vocab.txt",
+        'monologg/distilkobert': "https://s3.amazonaws.com/models.huggingface.co/bert/monologg/distilkobert/vocab.txt",
     }
 }
 
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
-    "monologg/kobert": 512,
-    "monologg/kobert-lm": 512,
-    "monologg/distilkobert": 512
+    'monologg/kobert': 512,
+    'monologg/kobert-lm': 512,
+    'monologg/distilkobert': 512,
 }
 
 PRETRAINED_INIT_CONFIGURATION = {
-    "monologg/kobert": {"do_lower_case": False},
-    "monologg/kobert-lm": {"do_lower_case": False},
-    "monologg/distilkobert": {"do_lower_case": False}
+    'monologg/kobert': {
+        'do_lower_case': False,
+    },
+    'monologg/kobert-lm': {
+        'do_lower_case': False,
+    },
+    'monologg/distilkobert': {
+        'do_lower_case': False,
+    },
 }
 
 SPIECE_UNDERLINE = u'▁'
@@ -58,8 +65,8 @@ SPIECE_UNDERLINE = u'▁'
 
 class KoBertTokenizer(PreTrainedTokenizer):
     """
-        SentencePiece based tokenizer. Peculiarities:
-            - requires `SentencePiece <https://github.com/google/sentencepiece>`_
+    SentencePiece based tokenizer. Peculiarities:
+    requires `SentencePiece <https://github.com/google/sentencepiece>`
     """
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
@@ -91,17 +98,12 @@ class KoBertTokenizer(PreTrainedTokenizer):
         # Build vocab
         self.token2idx = dict()
         self.idx2token = []
-        with open(vocab_txt, 'r', encoding='utf-8') as f:
+
+        with open(vocab_txt, "r", encoding="utf-8") as f:
             for idx, token in enumerate(f):
                 token = token.strip()
                 self.token2idx[token] = idx
                 self.idx2token.append(token)
-
-        try:
-            import sentencepiece as spm
-        except ImportError:
-            logger.warning("You need to install SentencePiece to use KoBertTokenizer: https://github.com/google/sentencepiece"
-                           "pip install sentencepiece")
 
         self.do_lower_case = do_lower_case
         self.remove_space = remove_space
@@ -121,51 +123,53 @@ class KoBertTokenizer(PreTrainedTokenizer):
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        state["sp_model"] = None
+        state['sp_model'] = None
         return state
 
     def __setstate__(self, d):
         self.__dict__ = d
-        try:
-            import sentencepiece as spm
-        except ImportError:
-            logger.warning("You need to install SentencePiece to use KoBertTokenizer: https://github.com/google/sentencepiece"
-                           "pip install sentencepiece")
+
         self.sp_model = spm.SentencePieceProcessor()
         self.sp_model.Load(self.vocab_file)
 
     def preprocess_text(self, inputs):
         if self.remove_space:
             outputs = " ".join(inputs.strip().split())
+
         else:
             outputs = inputs
+
         outputs = outputs.replace("``", '"').replace("''", '"')
 
         if not self.keep_accents:
-            outputs = unicodedata.normalize('NFKD', outputs)
+            outputs = unicodedata.normalize("NFKD", outputs)
             outputs = "".join([c for c in outputs if not unicodedata.combining(c)])
+
         if self.do_lower_case:
             outputs = outputs.lower()
 
         return outputs
 
     def _tokenize(self, text, return_unicode=True, sample=False):
-        """ Tokenize a string. """
         text = self.preprocess_text(text)
 
         if not sample:
             pieces = self.sp_model.EncodeAsPieces(text)
         else:
             pieces = self.sp_model.SampleEncodeAsPieces(text, 64, 0.1)
+
         new_pieces = []
         for piece in pieces:
             if len(piece) > 1 and piece[-1] == str(",") and piece[-2].isdigit():
                 cur_pieces = self.sp_model.EncodeAsPieces(piece[:-1].replace(SPIECE_UNDERLINE, ""))
+
                 if piece[0] != SPIECE_UNDERLINE and cur_pieces[0][0] == SPIECE_UNDERLINE:
                     if len(cur_pieces[0]) == 1:
                         cur_pieces = cur_pieces[1:]
+
                     else:
                         cur_pieces[0] = cur_pieces[0][1:]
+
                 cur_pieces.append(piece[-1])
                 new_pieces.extend(cur_pieces)
             else:
@@ -178,11 +182,11 @@ class KoBertTokenizer(PreTrainedTokenizer):
         return self.token2idx.get(token, self.token2idx[self.unk_token])
 
     def _convert_id_to_token(self, index, return_unicode=True):
-        """Converts an index (integer) in a token (string/unicode) using the vocab."""
+        """ Converts an index (integer) in a token (string/unicode) using the vocab. """
         return self.idx2token[index]
 
     def convert_tokens_to_string(self, tokens):
-        """Converts a sequence of tokens (strings for sub-words) in a single string."""
+        """ Converts a sequence of tokens (strings for sub-words) in a single string. """
         out_string = "".join(tokens).replace(SPIECE_UNDERLINE, " ").strip()
         return out_string
 
@@ -194,10 +198,13 @@ class KoBertTokenizer(PreTrainedTokenizer):
             single sequence: [CLS] X [SEP]
             pair of sequences: [CLS] A [SEP] B [SEP]
         """
+
         if token_ids_1 is None:
             return [self.cls_token_id] + token_ids_0 + [self.sep_token_id]
+
         cls = [self.cls_token_id]
         sep = [self.sep_token_id]
+
         return cls + token_ids_0 + sep + token_ids_1 + sep
 
     def get_special_tokens_mask(self, token_ids_0, token_ids_1=None, already_has_special_tokens=False):
@@ -220,6 +227,7 @@ class KoBertTokenizer(PreTrainedTokenizer):
                     "You should not supply a second sequence if the provided sequence of "
                     "ids is already formated with special tokens for the model."
                 )
+
             return list(map(lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0, token_ids_0))
 
         if token_ids_1 is not None:
@@ -236,16 +244,18 @@ class KoBertTokenizer(PreTrainedTokenizer):
         """
         sep = [self.sep_token_id]
         cls = [self.cls_token_id]
+
         if token_ids_1 is None:
             return len(cls + token_ids_0 + sep) * [0]
+
         return len(cls + token_ids_0 + sep) * [0] + len(token_ids_1 + sep) * [1]
 
     def save_vocabulary(self, save_directory):
         """ Save the sentencepiece vocabulary (copy original file) and special tokens file
-            to a directory.
-        """
+            to a directory. """
+
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error(f"Vocabulary path ({save_directory}) should be a directory")
             return
 
         # 1. Save sentencepiece model
@@ -261,10 +271,11 @@ class KoBertTokenizer(PreTrainedTokenizer):
             for token, token_index in sorted(self.token2idx.items(), key=lambda kv: kv[1]):
                 if index != token_index:
                     logger.warning(
-                        "Saving vocabulary to {}: vocabulary indices are not consecutive."
-                        " Please check that the vocabulary is not corrupted!".format(out_vocab_txt)
+                        f"Saving vocabulary to {out_vocab_txt}: vocabulary indices are not consecutive."
+                        " Please check that the vocabulary is not corrupted!"
                     )
                     index = token_index
+
                 writer.write(token + "\n")
                 index += 1
 
