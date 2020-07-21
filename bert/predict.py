@@ -7,7 +7,7 @@ from torch.utils.data import TensorDataset, DataLoader, SequentialSampler
 from tqdm import tqdm
 from transformers import AutoModelForSequenceClassification
 
-from torch.utils import init_logger, load_tokenizer
+from bert.utils import init_logger, load_tokenizer
 
 
 logger = logging.getLogger(__name__)

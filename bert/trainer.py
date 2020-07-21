@@ -7,7 +7,7 @@ from tqdm import tqdm, trange
 from transformers import AdamW, get_linear_schedule_with_warmup
 from transformers import AutoConfig, BertForSequenceClassification
 
-from torch.utils import compute_metrics, get_label
+from bert.utils import compute_metrics, get_label
 
 
 logger = logging.getLogger(__name__)

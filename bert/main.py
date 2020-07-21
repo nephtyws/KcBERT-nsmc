@@ -1,8 +1,8 @@
 import argparse
 
-from torch.data_loader import load_and_cache_examples
-from torch.trainer import Trainer
-from torch.utils import init_logger, load_tokenizer, set_seed
+from bert.data_loader import load_and_cache_examples
+from bert.trainer import Trainer
+from bert.utils import init_logger, load_tokenizer, set_seed
 
 
 def main(args):
