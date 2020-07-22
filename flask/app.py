@@ -1,6 +1,8 @@
-from flask import current_app, Flask, request
+from flask import Flask, render_template, request
+import jinja2
 import numpy as np
 import os
+import random
 import torch
 from torch.utils.data import TensorDataset, DataLoader, SequentialSampler
 from tqdm import tqdm
@@ -11,6 +13,9 @@ from bert.utils import load_tokenizer
 
 app = Flask(__name__)
 
+with open("../bert/data/review_data.csv", "r", encoding="utf-8") as f:
+    example_sentences = f.readlines()
+
 args = torch.load(os.path.join("../bert/model", 'training_args.bin'))
 model = AutoModelForSequenceClassification.from_pretrained("../bert/model")
 model.to("cpu")
@@ -19,12 +24,13 @@ tokenizer = load_tokenizer(args)
 
 
 @app.route("/")
-def hello():
-    return current_app.send_static_file("hello.html")
+def main():
+    return render_template("main.html", random=random, example_sentences=example_sentences)
 
 
-def predict(sentence):
-    # sentence = request.form.get("sentence")
+@app.route("/predict", methods=["POST"])
+def predict():
+    sentence = request.form.get("sentence")
 
     def convert_input_to_tensor_dataset():
         cls_token = tokenizer.cls_token
@@ -95,9 +101,9 @@ def predict(sentence):
             label = np.argmax(confidence, axis=1)
 
     confidence = f"{max(confidence[0]):.3f}"
-    sentiment = "positive" if label[0] else "negative"
+    sentiment = "POSITIVE" if label[0] else "NEGATIVE"
 
-    return f"Input: {sentence} and it's sentiment is {sentiment} with confidence {confidence}"
+    return f"It's sentiment is {sentiment} with confidence {confidence}"
 
 
 if __name__ == "__main__":

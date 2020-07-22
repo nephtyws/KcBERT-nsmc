@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Sentiment Analysis</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.5.5/dist/css/uikit.min.css" />
+        <script src="https://cdn.jsdelivr.net/npm/uikit@3.5.5/dist/js/uikit.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/uikit@3.5.5/dist/js/uikit-icons.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    </head>
+    <script>
+        $(function() {
+            $("#predict").on("click", function() {
+                $("#success").remove()
+                $.ajax({
+                    type: "POST",
+                    url: "/predict",
+                    data: {"sentence": $("#input").val()},
+                    success: function(data) {
+                        $("#result").text(data)
+                        $("#result-div").prepend("<span class=\"uk-label uk-label-success\" id='success'>Success</span>")
+                    },
+                })
+              });
+        });
+    </script>
+    <body>
+        <div class="uk-placeholder">
+            <fieldset class="uk-fieldset">
+                <legend class="uk-legend">Sentence sentiment analysis for Korean</legend>
+                <div class="uk-margin">
+                    <input class="uk-input" id="input" type="text" placeholder="Input sentence">
+                </div>
+            </fieldset>
+            <button class="uk-button uk-button-default" id="predict">PREDICT!</button>
+        </div>
+        <div class="uk-placeholder" id="result-div">
+            <h3 class="uk-heading-bullet" id="result"></h3>
+        </div>
+        <div class="uk-placeholder">
+            <legend class="uk-legend">Some reviews from ours (does not in the training set!)</legend>
+            <br>
+            <div class="uk-grid-row-large uk-child-width-1-3@s uk-text-center" uk-grid>
+                {% for review in random.choices(example_sentences, k=6) %}
+                <div>
+                    <div class="uk-card uk-card-default uk-card-body">{{ review }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </body>
+</html>
