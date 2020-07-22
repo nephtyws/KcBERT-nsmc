@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request
-import jinja2
 import numpy as np
 import os
 import random
