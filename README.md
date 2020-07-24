@@ -2,7 +2,7 @@
 
 - Korean sentiment classifier based on pre-trained KcBERT and NSMC data (for fine tuning)
 - Accuracy is 0.885 with decreased learning rate and about 2500 steps of fine tuning
-
+- Load fine-tuned model on Flask for user interface - Provides a softmax score and argmax score for input sentence.
 
 ## References
 
